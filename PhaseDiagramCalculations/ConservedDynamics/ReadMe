@@ -1,1 +1,16 @@
-This folder contains the python code for the conserved dynamics model and the three generated surface plots for the simulations in Figure 2.
+This folder contains the conserved-dynamics notebook, bundled FiPy dump files, and a Matplotlib rendering helper.
+
+Files:
+
+- `FiPyConservedDynamics.ipynb`: Python 3 notebook for the conserved-dynamics workflow.
+- `conserved_dynamics_plot.py`: helper script for rendering fresh FiPy results or bundled dump files without `mayavi`.
+- `q0d5`, `q1d5`, `q2`: bundled dump files corresponding to the conserved-dynamics examples used for Figure 2 style plots.
+
+Example commands:
+
+```bash
+python conserved_dynamics_plot.py q0d5 --output q0d5.png
+python conserved_dynamics_plot.py q1d5 --output q1d5.png
+python conserved_dynamics_plot.py q2 --output q2.png
+python conserved_dynamics_plot.py q0d5 --show
+```

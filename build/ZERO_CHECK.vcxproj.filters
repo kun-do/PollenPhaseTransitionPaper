@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ppl\Documents\Analysis\PollenPhaseTransitionPaper\build\CMakeFiles\d12f5a8adaddca06530eb7e7af5c0a02\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{E9EDDF52-FA72-32CF-8FF2-524EE588BFAB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

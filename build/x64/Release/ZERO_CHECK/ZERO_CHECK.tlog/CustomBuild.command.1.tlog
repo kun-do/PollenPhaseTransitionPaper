@@ -1,0 +1,10 @@
+^C:\USERS\PPL\DOCUMENTS\ANALYSIS\POLLENPHASETRANSITIONPAPER\BUILD\CMAKEFILES\D12F5A8ADADDCA06530EB7E7AF5C0A02\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper -BC:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/PollenPhaseTransitionPaper.slnx
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

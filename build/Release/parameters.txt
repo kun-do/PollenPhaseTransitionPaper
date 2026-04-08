@@ -1,0 +1,33 @@
+el_not: 4
+tau: -1
+lambda3: 1
+lambda4: 1
+
+Starting cms:
+0.451123 0.220445 0.221022 0.542032 0.369081 0.161887 0.290776 0.31713 0.241078 
+Function evaluation at starting cms: -0.900222
+Starting derivative: 1.81832
+FTolerance: 1e-08
+Number of iterations: 10
+Eigenvalues: 
+     (4.97699,0)
+     (1.44403,0)
+     (2.48853,0)
+     (1.65136,0)
+(-9.53338e-06,0)
+ (-2.9272e-06,0)
+     (3.55099,0)
+(-9.58051e-07,0)
+     (3.55099,0)
+Eigenvalues 2: 
+    (4.97719,0)
+    (1.44431,0)
+     (2.4887,0)
+    (1.65151,0)
+(0.000253595,0)
+(0.000123185,0)
+    (3.55119,0)
+(0.000181827,0)
+     (3.5511,0)
+Lowest point derivative value: 3.52639e-05
+Lowest_Hamiltonian_value: -15.4905

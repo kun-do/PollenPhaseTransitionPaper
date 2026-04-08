@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ppl\Documents\Analysis\PollenPhaseTransitionPaper\PhaseDiagramCalculations\GradientDescent_2l\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ppl\Documents\Analysis\PollenPhaseTransitionPaper\PhaseDiagramCalculations\Common\wigner_compat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ppl\Documents\Analysis\PollenPhaseTransitionPaper\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{C5C3A690-06C2-389E-8B71-FD154F573CC5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

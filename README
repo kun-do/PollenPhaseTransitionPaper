@@ -1,59 +1,179 @@
-# PhaseDiagramCalculations
-This is a repository of the code essential for the Pollen Cell Wall Patterns Form from Modulated Phases paper. It contains the following files and folders:
-	• PhaseDiagramCalculations: All code for building the phase diagram and finding kinetically arrested states
-		- GradientDescent_1l: Gradient descent for 1 el value used to find equilibrium states
-		- GradientDescent_2l: Gradient descent for 2 el values used to find equilibrium states
-		- SimulatedAnnealing_1l: Simulated annealing for 1 el value used to find equilibrium states
-		- SimulatedAnnealing_2l: Simulated annealing for 2 el values used to find equilibrium states
-		- ConservedDynamics: Contains code for FiPyPhaseFieldCrystalSphere.ipynb, the finite volume solver used to find kinetically arrested states; and surface plots for the three simulations in Figure 2
-	• TraitReconstruction
-		- 3State_WavelengthModel
-			- SpermatophyteTree.tre: Tree file
-			- SpermatophyteTree_wavelengthhypothesis.txt: Data file
-		- 2State_EquilibriumModel
-			- SpermatophyteTree.tre: Tree file
-			- SpermatophyteTree_equilibriumhypothesis.txt: Data file
-		- NexusFile_Spermatophytes.tree: Nexus file for ancestral trait reconstruction
+# Pollen Phase Transition Paper Code
 
-Each of the Gradient Descent and Simulated Annealing folders contains the following source code:
-	• Makefile
-	• main.cpp: main program
-	• Header files from Numerical Recipes [1] necessary for gradient descent and simulated annealing:
-		- nr.h
-		- nrtypes.h
-		- nrtypes_nr.h
-		- nrutil.h
-		- nrutil_nr.h
-	• surface_pattern_1l.py/surface_pattern_2l.py: plots the surface pattern onto a sphere
-	• wigxjpf.h (for Simulated Annealing): header file for the evaluation of wigner 3j coefficients
+This repository contains the code and data used for the "Pollen Cell Wall Patterns Form from Modulated Phases" workflows.
 
-REQUIREMENTS
-You need to have the following installed:
-	• Numpy, scipy, FiPy, mayavi, math, and matplotlib (Python)
-	• wigxjpf library and program for evaluation of wigner 3j coefficients (http://fy.chalmers.se/subatom/wigxjpf/)
-	• Eigen: a c++ template library for linear algebra (http://eigen.tuxfamily.org/)
-	• BayesTraits software (http://www.evolution.rdg.ac.uk/BayesTraitsV3.0.1/BayesTraitsV3.0.1.html)
+## Repository Layout
 
-USAGE
-1. To compile and generate an executable file, “make” is sufficient. This creates an executable file that 
-	can be run simply with: ./main.
-	The executable generates several text files:
-	⁃ T_H.txt: 2 columns, annealing temperature and lowest Hamiltonian value at every simulated annealing step
-	⁃ T_dH.txt: 2 columns, annealing temperature and Hamiltonian derivative value at every simulated annealing step
-	⁃ endcms.txt: the complex coefficients (cms) for the final pattern
-	⁃ cms.txt: the complex coefficient (cms) for the pattern at every annealing step
-	⁃ parameters.txt: Contains information on the parameters of the simulation (el_not, lambda3, etc.), the starting cos, the eigenvalues, the lowest point derivative value and the lowest hamiltonian value
-	⁃ time.txt: simulation time
+- `PhaseDiagramCalculations`
+  - `GradientDescent_1l`: gradient descent solver for one `l` value.
+  - `GradientDescent_2l`: gradient descent solver for two adjacent `l` values.
+  - `SimulatedAnnealing_1l`: simulated annealing solver for one `l` value.
+  - `SimulatedAnnealing_2l`: simulated annealing solver for two adjacent `l` values.
+  - `ConservedDynamics`: FiPy-based conserved-dynamics notebook, bundled dump files, and Matplotlib rendering helper.
+- `TraitReconstruction`
+  - input trees and data files for BayesTraits ancestral trait reconstruction.
 
-2. surface_pattern_1(2)l.py reads in two input files, endcms.txt and parameters.txt, and runs:
-	python surface_pattern_1(2)l.py endcms.txt parameters.txt
-    You can show the plot with “plt.show()” or save the figure with “plt.savefig([file name])”
+## Dependency Tiers
 
-3. Run FiPyPhaseFieldCrystalSphere.ipynb in jupyter to find the kinetically arrested states
+### Core plotting and post-processing
 
-4. To run the ancestral trait reconstruction, run the following command with the included tree and data            
-    files:
-	./BayesTraitsV3 TreeFile DataFile
+Install these to plot solver outputs:
 
+- `numpy`
+- `scipy`
+- `matplotlib`
 
-[1] Press, W.H., Teukolsky, S.A., Vetterling, W.T., & Flannery, B.P. Numerical Recipes: The Art of Scientific Computing. Cambridge [Cambridgeshire]: Cambridge University Press (1986)
+The `surface_pattern_1l.py` and `surface_pattern_2l.py` scripts now work without `mayavi`.
+
+### Conserved dynamics
+
+Install these to run the conserved-dynamics workflow:
+
+- `python` 3
+- `numpy`
+- `matplotlib`
+- `FiPy`
+
+`mayavi` is no longer required. The conserved-dynamics notebook and helper script use Matplotlib for 3D rendering.
+
+### C++ equilibrium solvers
+
+Install these to build the four C++ solvers:
+
+- a C++11 compiler
+- Eigen headers
+- CMake 3.16 or newer
+
+`wigxjpf` is no longer required. The repository now ships an in-repo Wigner 3j compatibility layer.
+
+### Trait reconstruction
+
+To run the ancestral trait reconstruction, you still need BayesTraits:
+
+- `BayesTraits`
+
+## Canonical Build Path
+
+Use the repository root CMake build on Windows, Linux, or macOS:
+
+```bash
+cmake -S . -B build
+cmake --build build --config Release
+```
+
+If CMake cannot find Eigen automatically, provide the include directory that contains `Eigen/Dense`:
+
+```bash
+cmake -S . -B build -DPOLLEN_EIGEN3_INCLUDE_DIR=/path/to/eigen
+cmake --build build --config Release
+```
+
+This creates the following solver targets:
+
+- `gradient_descent_1l`
+- `gradient_descent_2l`
+- `simulated_annealing_1l`
+- `simulated_annealing_2l`
+
+Legacy per-folder `Makefile`s are still present for Unix-like systems, but the CMake build is the supported path.
+
+## Running the C++ Solvers
+
+Each solver writes its output files into the current working directory:
+
+- `endcms.txt`
+- `cms.txt`
+- `parameters.txt`
+- `T_H.txt`
+- `T_dH.txt`
+- `time.txt`
+
+Run the executable from the directory where you want those files to be created.
+
+Typical examples:
+
+```bash
+build/gradient_descent_1l
+build/gradient_descent_2l
+build/simulated_annealing_1l
+build/simulated_annealing_2l
+```
+
+On multi-config generators such as Visual Studio, the binaries may instead live under `build/Release/`.
+
+`parameters.txt` records the main simulation settings, the starting coefficients, eigenvalue information, and the final Hamiltonian summary. `endcms.txt` is the main input for the sphere-plot scripts.
+
+## Plotting Equilibrium Surface Patterns
+
+After a solver run finishes, plot the final sphere pattern with the matching script:
+
+```bash
+python PhaseDiagramCalculations/GradientDescent_1l/surface_pattern_1l.py endcms.txt parameters.txt
+python PhaseDiagramCalculations/GradientDescent_2l/surface_pattern_2l.py endcms.txt parameters.txt
+```
+
+You can also save a figure without opening an interactive window:
+
+```bash
+python PhaseDiagramCalculations/GradientDescent_1l/surface_pattern_1l.py endcms.txt parameters.txt --output surface_pattern.png
+python PhaseDiagramCalculations/GradientDescent_2l/surface_pattern_2l.py endcms.txt parameters.txt --output surface_pattern.png
+```
+
+Equivalent copies of these plotting scripts are also present in the simulated annealing folders.
+
+## Conserved Dynamics Without `mayavi`
+
+The conserved-dynamics notebook is:
+
+- `PhaseDiagramCalculations/ConservedDynamics/FiPyConservedDynamics.ipynb`
+
+It now assumes Python 3 and uses Matplotlib instead of `mayavi`.
+
+For a fresh FiPy run inside the notebook, use the built-in helper import:
+
+```python
+from conserved_dynamics_plot import render_surface_plot
+render_surface_plot(x3dn, y3dn, z3dn, valc, show=True)
+```
+
+To render one of the bundled dump files without rerunning the simulation:
+
+```bash
+python PhaseDiagramCalculations/ConservedDynamics/conserved_dynamics_plot.py PhaseDiagramCalculations/ConservedDynamics/q0d5 --output q0d5.png
+python PhaseDiagramCalculations/ConservedDynamics/conserved_dynamics_plot.py PhaseDiagramCalculations/ConservedDynamics/q1d5 --output q1d5.png
+python PhaseDiagramCalculations/ConservedDynamics/conserved_dynamics_plot.py PhaseDiagramCalculations/ConservedDynamics/q2 --output q2.png
+```
+
+If you prefer an interactive plot instead of saving directly:
+
+```bash
+python PhaseDiagramCalculations/ConservedDynamics/conserved_dynamics_plot.py PhaseDiagramCalculations/ConservedDynamics/q0d5 --show
+```
+
+## Tests
+
+Build and run the Wigner compatibility test with CTest:
+
+```bash
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --config Release --target wigner_compat_test
+ctest --test-dir build -C Release --output-on-failure
+```
+
+Optional long-running solver smoke tests can be enabled with:
+
+```bash
+cmake -S . -B build -DBUILD_TESTING=ON -DPOLLEN_ENABLE_SOLVER_SMOKE_TESTS=ON
+```
+
+## BayesTraits Workflow
+
+The trait reconstruction inputs are included under `TraitReconstruction`. Run BayesTraits with the provided tree and data files, for example:
+
+```bash
+./BayesTraitsV3 TreeFile DataFile
+```
+
+## Reference
+
+Press, W.H., Teukolsky, S.A., Vetterling, W.T., and Flannery, B.P. Numerical Recipes: The Art of Scientific Computing. Cambridge University Press, 1986.

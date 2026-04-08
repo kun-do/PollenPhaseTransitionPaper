@@ -13,7 +13,7 @@
 #include "nrutil.h"
 #include "nrtypes.h"
 #include "nr.h"
-#include "wigxjpf.h"
+#include "../Common/wigner_compat.h"
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 using namespace std;

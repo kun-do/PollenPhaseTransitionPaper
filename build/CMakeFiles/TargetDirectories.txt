@@ -1,0 +1,12 @@
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/gradient_descent_1l.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/gradient_descent_2l.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/simulated_annealing_1l.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/simulated_annealing_2l.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/Experimental.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/Nightly.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/Continuous.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/NightlyMemoryCheck.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/wigner_compat_test.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/RUN_TESTS.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/ppl/Documents/Analysis/PollenPhaseTransitionPaper/build/CMakeFiles/ZERO_CHECK.dir

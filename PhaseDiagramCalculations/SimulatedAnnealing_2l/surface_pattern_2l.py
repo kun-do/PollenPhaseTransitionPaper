@@ -1,111 +1,149 @@
-import matplotlib as mpl
-#mpl.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib import cm, colors
-from mpl_toolkits.mplot3d import Axes3D
+import argparse
+
 import numpy as np
-from scipy.special import sph_harm
-import sys
 
-#importing files
-cms = sys.argv[1]
-parameters = sys.argv[2]
+try:
+    from scipy.special import sph_harm as _spherical_harmonic_impl
 
-Re_list = []
-Im_list = []
-parameters_list = []
+    def spherical_harmonic(m_value, ell, theta, phi):
+        return _spherical_harmonic_impl(m_value, ell, theta, phi)
 
+except ImportError:
+    from scipy.special import sph_harm_y as _spherical_harmonic_impl
 
-for line in open(cms):
-	list = line.split()
-	try:
-		Re = float(list[0])
-		Im = float(list[1])
-	except TypeError:
-		print("Type Error!")
-		continue
-	Re_list.append(Re)
-	Im_list.append(Im)
-	
-for line in open(parameters):
-	list = line.split()
-	try:
-		value = str(list[0])
-		parameter = float(list[1])
-	
-	except TypeError:
-		print("Type Error!")
-		continue
-	parameters_list.append(parameter)
-
-	if len(parameters_list)>=4:
-		break
+    def spherical_harmonic(m_value, ell, theta, phi):
+        return _spherical_harmonic_impl(ell, m_value, phi, theta)
 
 
-a = open(parameters)
-lines = a.readlines()
-if lines:	
-	last_line=lines[-1]
-H_value = last_line.split()[1]
-	
-parameters_list.append(H_value)
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Plot a two-l equilibrium surface pattern on a sphere."
+    )
+    parser.add_argument("cms", help="Path to endcms.txt or another coefficient file.")
+    parser.add_argument("parameters", help="Path to parameters.txt.")
+    parser.add_argument("--output", help="Optional output image path.")
+    parser.add_argument(
+        "--show",
+        action="store_true",
+        help="Display the plot interactively even when --output is provided.",
+    )
+    return parser.parse_args()
 
 
-phi = np.linspace(0, np.pi, 150)
-theta = np.linspace(0, 2*np.pi, 150)
-theta_2 = np.linspace(np.pi, 3*np.pi, 150)
+def load_coefficients(path):
+    real_parts = []
+    imaginary_parts = []
 
-phi, theta = np.meshgrid(phi, theta)
+    with open(path, "r") as handle:
+        for line in handle:
+            fields = line.split()
+            if len(fields) < 2:
+                continue
+            real_parts.append(float(fields[0]))
+            imaginary_parts.append(float(fields[1]))
 
-# The Cartesian coordinates of the unit sphere
-x = np.sin(phi) * np.cos(theta)
-y = np.sin(phi) * np.sin(theta)
-z = np.cos(phi)
-
-x_2 = np.sin(phi) * np.cos(theta_2)
-y_2 = np.sin(phi) * np.sin(theta_2)
-
-#m and l named correctly
-l = (int)((((len(Re_list))-1)/2)-1)
-
-# Calculate the spherical harmonic Y(l,m) and normalize to [0,1]
-fcolors = (Re_list[0]*sph_harm(0,l,theta,phi)).real + (Re_list[l+1]*sph_harm(0,l+1,theta,phi)).real
-fcolors_2 = (Re_list[0]*sph_harm(0,l,theta_2,phi)).real + (Re_list[l+1]*sph_harm(0,l+1,theta_2,phi)).real
-for m in range(1,l+1):
-	fcolors += ((complex(Re_list[m],Im_list[m])*sph_harm(m,l,theta,phi)).real) + ((complex(Re_list[m],Im_list[m]).conjugate()*pow(-1,m)*sph_harm(-m,l,theta,phi)).real)
-	fcolors_2 += ((complex(Re_list[m],Im_list[m])*sph_harm(m,l,theta_2,phi)).real) + ((complex(Re_list[m],Im_list[m]).conjugate()*pow(-1,m)*sph_harm(-m,l,theta_2,phi)).real)
-
-for m in range(1,l+2):
-	fcolors += ((complex(Re_list[m+l+1],Im_list[m+l+1])*sph_harm(m,l+1,theta,phi)).real) + ((complex(Re_list[m+l+1],Im_list[m+l+1]).conjugate()*pow(-1,m)*sph_harm(-m,l+1,theta,phi)).real) 	
-	fcolors_2 += ((complex(Re_list[m+l+1],Im_list[m+l+1])*sph_harm(m,l+1,theta_2,phi)).real) + ((complex(Re_list[m+l+1],Im_list[m+l+1]).conjugate()*pow(-1,m)*sph_harm(-m,l+1,theta_2,phi)).real)
+    return real_parts, imaginary_parts
 
 
-fmax, fmin = fcolors.max(), fcolors.min()
-#fcolors = (fcolors)
-#fcolors = fcolors/(fmax-fmin)
-fcolors = (fcolors - fmin)/(fmax - fmin)
+def load_parameters(path):
+    parameters = []
 
-fmax_2, fmin_2 = fcolors_2.max(), fcolors_2.min()
-#fcolors = (fcolors)
-#fcolors = fcolors/(fmax-fmin)
-fcolors_2 = (fcolors_2 - fmin_2)/(fmax_2 - fmin_2)
+    with open(path, "r") as handle:
+        for line in handle:
+            fields = line.split()
+            if len(fields) < 2:
+                continue
+            parameters.append(float(fields[1]))
+            if len(parameters) >= 4:
+                break
 
-# Set the aspect ratio to 1 so our sphere looks spherical
-#fig = plt.figure(figsize=plt.figaspect(1.))
-fig = plt.figure(figsize=(10,5))
-ax = fig.add_subplot(1,2,1, projection='3d')
-ax.plot_surface(x, y, z,  rstride=1, cstride=1, facecolors=cm.seismic(fcolors)) 
-ax.view_init(0,0)
-ax.set_axis_off()
-ax = fig.add_subplot(1,2,2, projection='3d')
-ax.plot_surface(x, y, z, rstride=1, cstride=1, facecolors=cm.seismic(fcolors)) 
-ax.view_init(0,180)
+    with open(path, "r") as handle:
+        lines = handle.readlines()
 
-# Turn off the axis planes
-ax.set_axis_off()
-second_el_not = parameters_list[0] + 1
-plt.title('Parameters are: el_not=%s and %s, tau=%s, lambda3=%s, lambda4=%s\nMinimum Hamiltonian value: %s'%(parameters_list[0], second_el_not, parameters_list[1], parameters_list[2], parameters_list[3], parameters_list[4]), fontsize=8)
-#plt.savefig("surface_pattern.png")
+    h_value = lines[-1].split()[1] if lines else "unknown"
+    parameters.append(h_value)
+    return parameters
 
 
-plt.show()
+def build_color_field(real_parts, imaginary_parts, theta, phi):
+    ell = int(((len(real_parts) - 1) / 2) - 1)
+    colors = (real_parts[0] * spherical_harmonic(0, ell, theta, phi)).real
+    colors += (real_parts[ell + 1] * spherical_harmonic(0, ell + 1, theta, phi)).real
+
+    for m_value in range(1, ell + 1):
+        coefficient = complex(real_parts[m_value], imaginary_parts[m_value])
+        colors += (coefficient * spherical_harmonic(m_value, ell, theta, phi)).real
+        colors += (
+            coefficient.conjugate() * pow(-1, m_value) * spherical_harmonic(-m_value, ell, theta, phi)
+        ).real
+
+    for m_value in range(1, ell + 2):
+        coefficient = complex(real_parts[m_value + ell + 1], imaginary_parts[m_value + ell + 1])
+        colors += (coefficient * spherical_harmonic(m_value, ell + 1, theta, phi)).real
+        colors += (
+            coefficient.conjugate() * pow(-1, m_value) * spherical_harmonic(-m_value, ell + 1, theta, phi)
+        ).real
+
+    color_min = colors.min()
+    color_max = colors.max()
+    if np.isclose(color_max, color_min):
+        return np.zeros_like(colors)
+    return (colors - color_min) / (color_max - color_min)
+
+
+def plot_pattern(real_parts, imaginary_parts, parameters, output_path=None, show=False):
+    import matplotlib as mpl
+
+    if output_path and not show:
+        mpl.use("Agg")
+
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
+    phi = np.linspace(0, np.pi, 150)
+    theta = np.linspace(0, 2 * np.pi, 150)
+    phi, theta = np.meshgrid(phi, theta)
+
+    x_coords = np.sin(phi) * np.cos(theta)
+    y_coords = np.sin(phi) * np.sin(theta)
+    z_coords = np.cos(phi)
+
+    colors = build_color_field(real_parts, imaginary_parts, theta, phi)
+
+    figure = plt.figure(figsize=(10, 5))
+    axis = figure.add_subplot(1, 2, 1, projection="3d")
+    axis.plot_surface(x_coords, y_coords, z_coords, rstride=1, cstride=1, facecolors=cm.seismic(colors))
+    axis.view_init(0, 0)
+    axis.set_axis_off()
+
+    axis = figure.add_subplot(1, 2, 2, projection="3d")
+    axis.plot_surface(x_coords, y_coords, z_coords, rstride=1, cstride=1, facecolors=cm.seismic(colors))
+    axis.view_init(0, 180)
+    axis.set_axis_off()
+
+    second_el_not = parameters[0] + 1
+    plt.title(
+        "Parameters are: el_not=%s and %s, tau=%s, lambda3=%s, lambda4=%s\nMinimum Hamiltonian value: %s"
+        % (parameters[0], second_el_not, parameters[1], parameters[2], parameters[3], parameters[4]),
+        fontsize=8,
+    )
+
+    if output_path:
+        plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
+    if show or not output_path:
+        plt.show()
+    else:
+        plt.close(figure)
+
+
+def main():
+    args = parse_args()
+    real_parts, imaginary_parts = load_coefficients(args.cms)
+    parameters = load_parameters(args.parameters)
+    plot_pattern(real_parts, imaginary_parts, parameters, output_path=args.output, show=args.show)
+
+
+if __name__ == "__main__":
+    main()
