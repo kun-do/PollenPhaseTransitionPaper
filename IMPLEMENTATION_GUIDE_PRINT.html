@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pollen Phase Transition Paper: Implementation Guide</title>
+  <style>
+    :root {
+      --ink: #1f2430;
+      --muted: #5f6b7a;
+      --accent: #8c2f39;
+      --accent-soft: #f7ece7;
+      --rule: #d8dce3;
+      --paper: #fffdf9;
+      --table-head: #f3f0ea;
+      --code-bg: #f7f7f9;
+    }
+
+    @page {
+      size: letter;
+      margin: 0.7in;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.45;
+      font-size: 11pt;
+    }
+
+    main {
+      max-width: 8.15in;
+      margin: 0 auto;
+      padding: 0.15in 0.05in 0.4in;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: "Cambria", "Times New Roman", serif;
+      color: #132238;
+      page-break-after: avoid;
+    }
+
+    h1 {
+      font-size: 24pt;
+      margin: 0 0 0.12in;
+      line-height: 1.08;
+    }
+
+    h2 {
+      font-size: 16pt;
+      margin-top: 0.34in;
+      padding-top: 0.12in;
+      border-top: 1px solid var(--rule);
+    }
+
+    h3 {
+      font-size: 12.5pt;
+      margin-top: 0.22in;
+      margin-bottom: 0.08in;
+    }
+
+    h4 {
+      font-size: 11.5pt;
+      margin-top: 0.14in;
+      margin-bottom: 0.04in;
+    }
+
+    p, li {
+      orphans: 3;
+      widows: 3;
+    }
+
+    p.lead {
+      color: var(--muted);
+      font-size: 11.6pt;
+      margin-top: 0;
+    }
+
+    .title-block {
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.18in;
+      margin-bottom: 0.2in;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 10pt;
+      margin-top: 0.08in;
+    }
+
+    .callout {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      padding: 0.12in 0.16in;
+      margin: 0.18in 0;
+    }
+
+    .equation {
+      background: #fcfcfe;
+      border: 1px solid var(--rule);
+      padding: 0.1in 0.12in;
+      margin: 0.14in 0;
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: var(--code-bg);
+      padding: 0.03em 0.28em;
+      border-radius: 3px;
+      font-size: 0.95em;
+    }
+
+    pre {
+      font-family: Consolas, "Courier New", monospace;
+      background: var(--code-bg);
+      padding: 0.12in;
+      border: 1px solid var(--rule);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.14in 0 0.2in;
+      font-size: 10.2pt;
+    }
+
+    th, td {
+      border: 1px solid var(--rule);
+      padding: 0.08in 0.09in;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--table-head);
+      text-align: left;
+    }
+
+    ul, ol {
+      margin-top: 0.05in;
+      margin-bottom: 0.12in;
+    }
+
+    .figure {
+      margin: 0.22in 0;
+      page-break-inside: avoid;
+    }
+
+    .figure img {
+      width: 100%;
+      max-width: 7.2in;
+      display: block;
+      margin: 0 auto;
+      border: 1px solid var(--rule);
+      background: white;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 9.5pt;
+      margin-top: 0.08in;
+      text-align: center;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 9.3pt;
+    }
+  </style>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']]
+      },
+      svg: {
+        fontCache: 'global'
+      },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+          MathJax.startup.promise.then(() => {
+            document.body.setAttribute('data-math-ready', 'true');
+          });
+        }
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <main>
+    <section class="title-block">
+      <h1>Pollen Phase Transition Paper<br>Implementation Guide</h1>
+      <p class="lead">
+        This document explains what the current repository implements, how the code works,
+        how it differs from the original repository, and how to interpret the solver outputs,
+        diagnostic text files, and generated PNG visualizations.
+      </p>
+      <p class="meta">Repository root: <code>PollenPhaseTransitionPaper</code></p>
+    </section>
+
+    <section>
+      <h2>1. Repository Overview</h2>
+      <p>
+        The repository contains three main computational workflows:
+      </p>
+      <ol>
+        <li>
+          <strong>Equilibrium phase-pattern solvers</strong> in <code>PhaseDiagramCalculations</code>,
+          implemented as four standalone C++ executables.
+        </li>
+        <li>
+          <strong>Python post-processing and visualization</strong>, which reconstructs the
+          final spherical field from harmonic coefficients and saves a PNG.
+        </li>
+        <li>
+          <strong>Conserved dynamics on the sphere</strong>, implemented in FiPy and rendered
+          with Matplotlib.
+        </li>
+      </ol>
+      <p>
+        The <code>TraitReconstruction</code> directory is separate from the C++ and Python solver pipeline.
+        It provides BayesTraits inputs rather than a directly coupled numerical model.
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Mathematical Picture</h2>
+      <p>
+        The equilibrium solvers model a scalar field on the sphere by expanding it in spherical harmonics:
+      </p>
+      <div class="equation">
+        \[
+        \phi(\theta,\varphi) = \sum_{\ell,m} c_{\ell m} Y_{\ell}^{m}(\theta,\varphi).
+        \]
+      </div>
+      <p>
+        In the one-shell models, the sum is restricted to a single angular degree
+        \( \ell = \ell_0 \). In the mixed-shell models, the field is built from two adjacent shells,
+        typically \( \ell = \ell_0 \) and \( \ell = \ell_0 + 1 \).
+      </p>
+      <p>
+        Because the field is real, the negative-\(m\) modes are not stored independently. Instead,
+        they are reconstructed through the usual reality constraint
+      </p>
+      <div class="equation">
+        \[
+        c_{\ell,-m} = (-1)^m c_{\ell m}^{*}.
+        \]
+      </div>
+      <p>
+        The Hamiltonian is organized as a quadratic term, a cubic term, and a quartic term:
+      </p>
+      <div class="equation">
+        \[
+        H = H_2 + H_3 + H_4.
+        \]
+      </div>
+      <div class="equation">
+        \[
+        H_2 \sim \tau \sum_{\ell,m} |c_{\ell m}|^2
+        \qquad
+        H_3 \sim \lambda_3 \, Q_3(c)
+        \qquad
+        H_4 \sim \lambda_4 \, Q_4(c).
+        \]
+      </div>
+      <p>
+        In the two-shell models, the quadratic penalty is modified to favor a preferred angular scale:
+      </p>
+      <div class="equation">
+        \[
+        H_2 \sim \sum_{\ell,m} \left[\tau + \kappa(\ell - \ell_{\mathrm{not}})^2 \right] |c_{\ell m}|^2.
+        \]
+      </div>
+      <p>
+        The cubic and quartic couplings are built from Gaunt coefficients, which are themselves
+        computed from Wigner 3j symbols. In schematic form,
+      </p>
+      <div class="equation">
+        \[
+        G(\ell,\ell',\ell'';m,m',m'')
+        \propto
+        \begin{pmatrix}
+        \ell & \ell' & \ell'' \\
+        m & m' & m''
+        \end{pmatrix}
+        \begin{pmatrix}
+        \ell & \ell' & \ell'' \\
+        0 & 0 & 0
+        \end{pmatrix}.
+        \]
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Current Implementation Architecture</h2>
+
+      <h3>3.1 Build System</h3>
+      <p>
+        The current repository builds from the root <code>CMakeLists.txt</code>. The build:
+      </p>
+      <ul>
+        <li>requires C++11,</li>
+        <li>finds Eigen automatically when possible,</li>
+        <li>accepts a manual Eigen path through <code>POLLEN_EIGEN3_INCLUDE_DIR</code>,</li>
+        <li>builds all four solver executables from one root entrypoint,</li>
+        <li>and can optionally build a Wigner compatibility test.</li>
+      </ul>
+
+      <h3>3.2 Solver Layout</h3>
+      <p>
+        Each solver remains a large standalone <code>main.cpp</code> rather than a modular C++ library.
+        The code structure is therefore best understood as four configured numerical programs that
+        share some low-level infrastructure but otherwise embed most logic directly in the solver source.
+      </p>
+
+      <h3>3.3 Shared Wigner 3j Backend</h3>
+      <p>
+        The current repository includes an in-repo compatibility layer in
+        <code>PhaseDiagramCalculations/Common/wigner_compat.cpp</code>. It exposes the same API subset
+        that the older code expected:
+      </p>
+      <ul>
+        <li><code>wig_table_init(int, int)</code></li>
+        <li><code>wig_temp_init(int)</code></li>
+        <li><code>wig3jj(int, int, int, int, int, int)</code></li>
+        <li><code>wig_temp_free()</code></li>
+        <li><code>wig_table_free()</code></li>
+      </ul>
+      <p>
+        Internally, it checks selection rules early, caches log-factorials, and evaluates the summation
+        in a numerically stable form. This is what removed the hard dependency on <code>wigxjpf</code>.
+      </p>
+
+      <h3>3.4 Python Plotting Layer</h3>
+      <p>
+        The equilibrium plotting scripts read <code>endcms.txt</code> and <code>parameters.txt</code>,
+        rebuild the scalar field on a grid using spherical harmonics, normalize the field, and then render
+        a Matplotlib sphere with two viewpoints. The scripts now support both
+        <code>scipy.special.sph_harm</code> and the newer <code>sph_harm_y</code> interface.
+      </p>
+
+      <h3>3.5 Conserved-Dynamics Layer</h3>
+      <p>
+        The FiPy notebook is now paired with a reusable Matplotlib renderer. Instead of depending on
+        <code>mayavi</code>, the helper converts the FiPy mesh and field values to a displaced 3D point cloud
+        and saves or shows the result.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. The Four Solver Families</h2>
+
+      <h3>4.1 <code>GradientDescent_1l</code></h3>
+      <p>
+        This solver minimizes the Hamiltonian on a single shell \( \ell = \ell_{\mathrm{not}} \).
+        In the current checked-in configuration:
+      </p>
+      <ul>
+        <li>\( \ell_{\mathrm{not}} = 4 \)</li>
+        <li>\( \tau = -1 \)</li>
+        <li>\( \lambda_3 = 1 \)</li>
+        <li>\( \lambda_4 = 1 \)</li>
+      </ul>
+      <p>
+        It uses a Numerical Recipes conjugate-gradient minimizer with an analytic derivative.
+      </p>
+
+      <h3>4.2 <code>GradientDescent_2l</code></h3>
+      <p>
+        This solver minimizes a two-shell model using \( \ell = \ell_{\mathrm{not}} \) and
+        \( \ell = \ell_{\mathrm{not}} + 1 \). In the current configuration:
+      </p>
+      <ul>
+        <li>\( \ell_{\mathrm{not}} = 4 \)</li>
+        <li>\( \kappa = 1 \)</li>
+        <li>\( \tau = -1 \)</li>
+        <li>\( \lambda_3 = 0 \)</li>
+        <li>\( \lambda_4 = 1 \)</li>
+        <li>\( \ell_{\mathrm{not}}^{\mathrm{pref}} = (2\ell_{\mathrm{not}} + 1)/2 = 4.5 \)</li>
+      </ul>
+      <p>
+        It still uses a gradient-based optimizer, but numerical differentiation is used for part of the derivative workflow.
+      </p>
+
+      <h3>4.3 <code>SimulatedAnnealing_1l</code></h3>
+      <p>
+        This is the one-shell model optimized by an annealed simplex rather than direct gradient descent.
+        Its current configuration is:
+      </p>
+      <ul>
+        <li>\( \ell_{\mathrm{not}} = 4 \)</li>
+        <li>\( \tau = -1 \)</li>
+        <li>\( \lambda_3 = 0 \)</li>
+        <li>\( \lambda_4 = 1 \)</li>
+      </ul>
+
+      <h3>4.4 <code>SimulatedAnnealing_2l</code></h3>
+      <p>
+        This is the two-shell annealing variant. Its checked-in configuration is not parameter-matched
+        to the two-shell gradient solver:
+      </p>
+      <ul>
+        <li>\( \ell_0 = 3 \)</li>
+        <li>\( \tau = -1 \)</li>
+        <li>\( \lambda_3 = 0 \)</li>
+        <li>\( \lambda_4 = 1 \)</li>
+        <li>\( \ell_{\mathrm{not}}^{\mathrm{pref}} = 3.2 \)</li>
+      </ul>
+      <div class="callout">
+        The two two-shell solvers are best understood as related but not identical configured experiments.
+        A direct energy comparison is only meaningful if the basis, parameters, and optimization setup are aligned.
+      </div>
+    </section>
+
+    <section>
+      <h2>5. What Changed Relative to the Original Repository</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Topic</th>
+            <th>Original Behavior</th>
+            <th>Current Behavior</th>
+            <th>Practical Effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Build path</td>
+            <td>Per-folder Makefiles were the main route.</td>
+            <td>Root-level CMake is the supported entrypoint.</td>
+            <td>Windows and cross-platform builds are much more approachable.</td>
+          </tr>
+          <tr>
+            <td>Wigner backend</td>
+            <td><code>wigxjpf</code> was required.</td>
+            <td>In-repo compatibility layer replaces it.</td>
+            <td>One fewer external numerical dependency.</td>
+          </tr>
+          <tr>
+            <td>Conserved dynamics visualization</td>
+            <td><code>mayavi</code> was required.</td>
+            <td>Matplotlib renderer replaces it.</td>
+            <td>Modern Python environments work much more easily.</td>
+          </tr>
+          <tr>
+            <td>Equilibrium plotting</td>
+            <td>Older SciPy assumptions were baked in.</td>
+            <td>Scripts support both <code>sph_harm</code> and <code>sph_harm_y</code>.</td>
+            <td>Plots work in current SciPy releases.</td>
+          </tr>
+          <tr>
+            <td>Testing</td>
+            <td>No comparable root test path.</td>
+            <td>Wigner backend test and optional smoke tests were added.</td>
+            <td>Better regression confidence.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Run artifacts such as <code>build/</code>, <code>run_gd1l/</code>, and generated PNG files are not conceptual
+        design changes. They are example outputs and working directories produced by the current workflow.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Running the Current Workflow</h2>
+
+      <h3>6.1 Build</h3>
+      <pre>cmake -S . -B build
+cmake --build build --config Release</pre>
+
+      <h3>6.2 Run a Solver</h3>
+      <p>Run the executable in the directory where you want the outputs to be written:</p>
+      <pre>mkdir run_gd1l
+cd run_gd1l
+..\build\Release\gradient_descent_1l.exe</pre>
+
+      <h3>6.3 Plot the Result</h3>
+      <pre>python PhaseDiagramCalculations\GradientDescent_1l\surface_pattern_1l.py run_gd1l\endcms.txt run_gd1l\parameters.txt --output run_gd1l\gd1l.png</pre>
+
+      <p>
+        For two-shell results, use <code>surface_pattern_2l.py</code> instead.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Understanding the Output Files</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Meaning</th>
+            <th>How to Use It</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>startingcms.txt</code></td>
+            <td>Initial coefficient vector before minimization.</td>
+            <td>Useful for debugging and reproducibility, not usually the final scientific result.</td>
+          </tr>
+          <tr>
+            <td><code>cms.txt</code></td>
+            <td>Trajectory-like or checkpoint output, depending on the solver.</td>
+            <td>Mainly diagnostic; not usually the plotting input.</td>
+          </tr>
+          <tr>
+            <td><code>endcms.txt</code></td>
+            <td>Final converged harmonic coefficients.</td>
+            <td>The main quantitative result and the normal plotting input.</td>
+          </tr>
+          <tr>
+            <td><code>parameters.txt</code></td>
+            <td>Run summary with parameter values, convergence metrics, eigenvalues, and final energy.</td>
+            <td>Use it to interpret the state and label plots.</td>
+          </tr>
+          <tr>
+            <td><code>T_H.txt</code></td>
+            <td>Hamiltonian values across the annealing schedule.</td>
+            <td>Optimization diagnostic for annealing runs.</td>
+          </tr>
+          <tr>
+            <td><code>T_dH.txt</code></td>
+            <td>Derivative-related annealing diagnostic.</td>
+            <td>Convergence tracking for the annealing workflow.</td>
+          </tr>
+          <tr>
+            <td><code>time.txt</code></td>
+            <td>Runtime summary, when written by the solver.</td>
+            <td>Performance reference rather than a direct scientific result.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>8. What the PNG Represents</h2>
+      <p>
+        The equilibrium PNG is not a raw solver dump. It is a visualization of the reconstructed field
+        obtained from <code>endcms.txt</code>. The plotting code evaluates
+      </p>
+      <div class="equation">
+        \[
+        \phi(\theta,\varphi)
+        = c_{\ell 0} Y_{\ell}^{0}(\theta,\varphi)
+        + \sum_{m=1}^{\ell}
+        \left[
+          c_{\ell m} Y_{\ell}^{m}(\theta,\varphi)
+          + c_{\ell m}^{*} (-1)^m Y_{\ell}^{-m}(\theta,\varphi)
+        \right].
+        \]
+      </div>
+      <p>
+        It then normalizes the result to a unit color scale and draws two viewpoints of the same sphere.
+        The colors therefore communicate <em>relative field structure</em>, not an absolute physical unit.
+      </p>
+      <p>
+        More explicitly, the plotting workflow reconstructs \( \phi(\theta,\varphi) \), finds the sampled minimum
+        and maximum, rescales the field values to \([0,1]\), and then maps that normalized field to Matplotlib's
+        <code>seismic</code> colormap.
+      </p>
+      <ul>
+        <li>blue means the field is near the lower end of that run's sampled values,</li>
+        <li>red means the field is near the upper end of that run's sampled values,</li>
+        <li>white or pale regions lie near the midpoint of the normalized range.</li>
+      </ul>
+      <p>
+        Two cautions matter. First, the normalization is done separately for each run, so "red" in one PNG is not
+        guaranteed to mean the same absolute field value as "red" in another PNG. Second, white does not necessarily
+        mean \( \phi = 0 \); it means the midpoint between the sampled minimum and maximum after normalization.
+      </p>
+      <p>
+        The safest physical interpretation is therefore that red and blue mark high and low regions of the reconstructed
+        scalar field, while the most robust observables are the symmetry, connectivity, number, and arrangement of
+        domains rather than the absolute shade intensity.
+      </p>
+      <p>
+        There is also a model-symmetry nuance: when \( \lambda_3 = 0 \), the system is often close to a
+        \( \phi \to -\phi \) symmetry, so a red/blue-swapped rendering can correspond to the same physical pattern
+        up to sign. When \( \lambda_3 \neq 0 \), that symmetry is generally broken more strongly, so the polarity of
+        the field can matter more.
+      </p>
+
+      <div class="figure">
+        <img src="run_gd1l/gd1l.png" alt="Example one-shell equilibrium plot">
+        <div class="caption">
+          Example one-shell equilibrium result from <code>run_gd1l/gd1l.png</code>.
+          The two panels are opposite views of the same reconstructed spherical pattern.
+        </div>
+      </div>
+
+      <p>
+        In the current example:
+      </p>
+      <ul>
+        <li>the left view shows a central blue domain surrounded by red structure,</li>
+        <li>the right view shows paired lateral blue domains,</li>
+        <li>the symmetry and patch arrangement are the main visual observables.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>9. Parameter Glossary</h2>
+
+      <h3>9.1 \( \ell_{\mathrm{not}} \)</h3>
+      <p>
+        The primary spherical-harmonic angular degree. In the one-shell model, it is the only active shell.
+        In the two-shell gradient model, it is the lower of the two active shells.
+      </p>
+
+      <h3>9.2 \( \tau \)</h3>
+      <p>
+        The quadratic coefficient. It controls whether the zero-amplitude state is energetically favored or
+        whether patterned states are driven to appear.
+      </p>
+
+      <h3>9.3 \( \lambda_3 \)</h3>
+      <p>
+        The cubic coupling strength. When \( \lambda_3 = 0 \), the cubic interaction is absent.
+      </p>
+
+      <h3>9.4 \( \lambda_4 \)</h3>
+      <p>
+        The quartic stabilization strength. This term keeps the model energetically bounded in the useful regime.
+      </p>
+
+      <h3>9.5 \( \kappa \)</h3>
+      <p>
+        The mixed-shell quadratic penalty strength. It controls how strongly the model is pulled toward a preferred
+        angular scale.
+      </p>
+
+      <h3>9.6 \( \ell_{\mathrm{not}}^{\mathrm{pref}} \)</h3>
+      <p>
+        The preferred angular mode center in the mixed-shell model, written in the code as <code>l_not</code>.
+      </p>
+
+      <h3>9.7 Minimum Hamiltonian Value</h3>
+      <p>
+        The final energy of the converged state. Lower values are more favorable only when the runs share the same
+        parameterization, active basis, and solver framing.
+      </p>
+
+      <h3>9.8 Hessian Eigenvalues</h3>
+      <p>
+        Local-curvature diagnostics of the final state. Positive eigenvalues suggest locally stable directions;
+        near-zero or negative values can indicate flat directions, marginality, or instability.
+      </p>
+    </section>
+
+    <section>
+      <h2>10. Example Walkthrough: <code>run_gd1l</code></h2>
+      <p>
+        The current repository already contains a concrete run in <code>run_gd1l</code>. Its summary reports:
+      </p>
+      <ul>
+        <li>\( \ell_{\mathrm{not}} = 4 \)</li>
+        <li>\( \tau = -1 \)</li>
+        <li>\( \lambda_3 = 1 \)</li>
+        <li>\( \lambda_4 = 1 \)</li>
+        <li>starting energy \( \approx -0.900222 \)</li>
+        <li>10 iterations</li>
+        <li>final derivative \( \approx 3.53 \times 10^{-5} \)</li>
+        <li>final Hamiltonian \( \approx -15.4905 \)</li>
+      </ul>
+      <p>
+        That interpretation is:
+      </p>
+      <ul>
+        <li>the optimizer found a state much lower in energy than the starting point,</li>
+        <li>the small final derivative indicates good convergence,</li>
+        <li>and the plotted domain structure in the PNG is therefore a plausible local minimum for this parameter set.</li>
+      </ul>
+      <p>
+        Because this is the one-shell \( \ell = 4 \) case, the stored coefficient file contains five explicit lines,
+        corresponding to \( m = 0, 1, 2, 3, 4 \).
+      </p>
+    </section>
+
+    <section>
+      <h2>11. Best Mental Model for the Repository</h2>
+      <p>
+        The most accurate concise picture of the repository is:
+      </p>
+      <ul>
+        <li>the C++ code solves for equilibrium spherical-harmonic coefficients,</li>
+        <li>the text files record the converged coefficients and diagnostics,</li>
+        <li>the Python scripts reconstruct and visualize the final field,</li>
+        <li>the FiPy notebook is a separate time-dependent workflow,</li>
+        <li>and the current repository modernizes the build and plotting stack without changing the overall scientific model structure.</li>
+      </ul>
+      <p class="small">
+        Print-ready HTML generated for PDF export. Math is rendered with MathJax so the symbols,
+        subscripts, superscripts, and equations appear cleanly in the exported document.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
